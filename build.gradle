@@ -2,10 +2,11 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '2.7.18'
     id 'io.spring.dependency-management' version '1.1.4'
+    id 'maven-publish'
 }
 
 group = 'co.acta'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 description = 'SlackSDK'
 
 java {
@@ -20,6 +21,37 @@ jar { enabled = true }
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            def repoUrl = NEXUS_URL
+            url = repoUrl
+            allowInsecureProtocol = true
+
+            credentials {
+                username NEXUS_USER_NAME
+                password NEXUS_PASSWORD
+            }
+        }
+    }
+
+    publications {
+        myPublication(MavenPublication) {
+            groupId = 'co.acta'
+            artifactId = 'slacksdk'
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
     }
 }
 

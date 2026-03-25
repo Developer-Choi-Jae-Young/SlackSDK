@@ -9,6 +9,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -32,6 +33,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SlackAspect {
     private final RestTemplate restTemplate;
+
+    @Value("${slack.board.add.url}")
+    private String slackBoardAddUrl;
+    @Value("${slack.board.reply.delete.url}")
+    private String slackBoardReplyDeleteUrl;
+    @Value("${slack.board.reply.update.url}")
+    private String slackBoardReplyUpdateUrl;
+
 
     @AfterReturning(pointcut = "@annotation(co.acta.slacksdk.anno.SlackMessage) || " +
             "@annotation(co.acta.slacksdk.anno.SlackReplyUpdate) || " +
@@ -67,14 +76,14 @@ public class SlackAspect {
 
     private void sendByAction(Method method, SlackMessageable vo, List<MultipartFile> files) {
         Map<String, Object> dtoMap = new HashMap<>();
-        String targetUrl = "http://localhost:8888/bo/board/add";
+        String targetUrl = slackBoardAddUrl;
 
         if (method.isAnnotationPresent(SlackReplyDelete.class)) {
-            targetUrl = "http://localhost:8888/bo/reply/delete";
+            targetUrl = slackBoardReplyDeleteUrl;
             dtoMap.put("replyId", vo.getSDKReplyId());
             dtoMap.put("status", "DELETED");
         } else if (method.isAnnotationPresent(SlackReplyUpdate.class)) {
-            targetUrl = "http://localhost:8888/bo/reply/update";
+            targetUrl = slackBoardReplyUpdateUrl;
             dtoMap.put("replyId", vo.getSDKReplyId());
             dtoMap.put("content", vo.getSDKContent());
             dtoMap.put("status", "UPDATED");
